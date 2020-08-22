@@ -1,0 +1,610 @@
+= Workbook for Spring Cloud Contract
+
+:toc: left
+
+
+== Introduction
+The example handles ordering a coffee as probably everyone knows it from fastfood and coffeeshop chains.
+The goal is to provide a simple example which participants should be able to understand without further explanation
+or specialised knowledge.
+The focus is on the communication and the contracts describing this communication and not the business logic itself.
+Application design comes after simplicity for the sake of the example.
+
+== Get started
+* check out the repo from GitHub: https://github.com/fabapp/spring-cloud-contract-workshop
+* switch to the branch `exercise-1`
+* Import as project into your IDE
+
+== A diagram is worth a thousand words
+[plantuml, "example-coffeeshop", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+actor Client <<Customer>>
+participant Cashier
+participant Barista
+
+group Example 1 (REST)
+Client -> Cashier : POST: /order\n\
+{\n\
+    'product': 'coffee',\n\
+    'qty': 2\n\
+}
+activate Cashier
+
+Cashier -> Client : return \n\
+{\n\
+    'orderId': 1,\n\
+    'product': 'coffee',\n\
+    'qty': 2,\n\
+    'amount': 2.86\n\
+}
+deactivate Cashier
+end
+
+group Exercise 1 (REST)
+Client -> Cashier : POST: /order/1/payment \n\
+{\n\
+    'amount': 3\n\
+}
+activate Cashier
+end
+
+group Example 2 (Messaging)
+
+Cashier -> Barista : <<async>> orderPlacedEvent(\n\
+{\n\
+    'orderId': 1,\n\
+    'product': 'coffee',\n\
+    'qty': 2\n\
+})
+activate Barista
+end
+
+group Exercise 1
+
+Cashier -> Client : return \n\
+{\n\
+    'amountAsked': 2.86,\n\
+    'paid': 3,\n\
+    'change': 0.14}\n\
+}
+deactivate Cashier
+end
+
+group Exercise 2 (Messaging)
+
+Barista -> Client : <<async>> orderPreparedEvent(\n\
+{\n\
+    'orderId': 1\n\
+})
+deactivate Barista
+end
+@enduml
+....
+
+=== The Workflow
+
+The workshop uses the most simple workflow where the contracts will be added by the consumer into the producer's
+project (module).
+The consumer then creates the stubs locally and uses these to implement the tests against the API provided by the
+producer.
+Then the producer implements the contract.
+
+...and we have consumer driven contracts
+
+
+== Example 1:  Customer places an order (REST)
+[plantuml, "example-1", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+actor Client <<Customer>>
+participant Cashier
+
+group Example 1 (REST)
+Client -> Cashier : POST: /order\n\
+{\n\
+    'product': 'coffee',\n\
+    'qty': 2\n\
+}
+activate Cashier
+
+Cashier -> Client : return \n\
+{\n\
+    'orderId': 1,\n\
+    'product': 'coffee',\n\
+    'qty': 2,\n\
+    'amount': 2.86\n\
+}
+deactivate Cashier
+end
+
+@enduml
+....
+
+The `customer` consumes the ``cashier``'s REST Api to order two coffee.
+The `cashier` takes the order and stores it in a database.
+She calculates the price and returns the order with all information.
+
+
+
+=== The consumer defines a contract
+* The `customer` (consumer) consumes the ``cashier``'s (producer) REST API and provides a
+  link:./cashier/src/test/resources/contracts/rest/order/cashier-accepts-order.groovy[contract, window=_blank]
+  to describe the required REST Api of the `cashier`
+
+* The contract is placed under `src/test/resources/contracts/...`
+
+* The ``cashier``s (producer) link:./cashier/pom.xml[pom.xml] requires dependencies to `spring-cloud-starter-contract-verifier`
+  and the Spring Cloud Contract plugin `spring-cloud-contract-maven-plugin`
+
+* When you run `mvn clean install -DskipTests` the plugin generates the stubs which will be used to provide a
+  http://wiremock.org/[Wiremock] server to the consumer which behaves as defined in the contract.
+  The generated stub definition can be found in
+  link:./cashier/target/stubs/META-INF/de.fabiankrueger.scc/cashier/1.0-SNAPSHOT/mappings/rest/order/cashier-accepts-order.json[target/stubs/META-INF/de.fabiankrueger.scc/cashier/1.0-SNAPSHOT/mappings/rest/order/cashier-accepts-order.json, window=_blank]
+  of the `cashier` module.
+
+* These stubs will be provided to the `customer` (consumer) through the generated jar `cashier-1.0-SNAPSHOT-stubs.jar`
+  previously installed to the local Maven repository
+
+* The consumer can then write tests and use
+  `@AutoConfigureStubRunner(ids = "<groupId>:<artifactId>:<version>:stubs", stubsMode = StubRunnerProperties.StubsMode.LOCAL)`
+  annotation on class level of the tests to start the Wiremock server with the stubs as done in the
+  link:./customer/src/test/java/de/fabiankrueger/scc/customer/CustomerPlacesOrderTest.java[CustomerPlacesOrderTest, target=_blank]
+
+* The `costumer` (consumer) requires only the `spring-cloud-starter-contract-stub-runner` dependency.
+
+
+
+=== The producer implements the contract
+* The Spring Cloud Contract plugin generates a test for each contract which calls the producer Api to verify the contract.
+
+* Therefor Spring Cloud Contract needs a
+  link:./customer/src/test/java/de/fabiankrueger/scc/customer/CustomerPlacesOrderTest.java[BaseClass] provided by you
+  which provides the test setup to run the tests.
+  The generated test will extend this BaseClass.
+
+* The BaseClass has to be defined in the plugin configuration.
+
+* If you run `mvn clean install` on the `cashier` (producer) side,
+  the generated test will be executed and verify that the contract has been implemented.
+
+* You can find the generated test in the ``cashier``s target dir under
+  link:./cashier/target/generated-test-sources/contracts/de/fabiankrueger/scc/cashier/rest/OrderTest.java[`target/generated-test-sources`, window=_blank].
+
+
+
+== Exercise 1: Customer pays order (REST)
+Now that we've seen how Spring Cloud Contract guarantees the implementation of the Api by the producer as expected by
+the consumer. Let's get our hands dirty and define a contract for the payment flow.
+
+[plantuml, "exercise-1", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+actor Client <<Customer>>
+participant Cashier
+
+group Exercise 1 (REST)
+Client -> Cashier : POST: /order/1/payment \n\
+{\n\
+    'amountGiven': 3\n\
+}
+activate Cashier
+
+Cashier -> Client : return \n\
+{\n\
+    'amountAsked': 2.86,\n\
+    'amountGiven': 3,\n\
+    'changeReturned': 0.14}\n\
+}
+deactivate Cashier
+end
+
+@enduml
+....
+
+
+
+=== Consumer
+The `customer` receveid the `Order` with an amount to pay.
+Now the `customer` needs to pay his order and sends a POST request with the amount given to the `cashier`.
+The `cashier` processes the payment and returns the information about the payment.
+
+==== In short
+The `customer` (consumer) wants to provide a contract that describes the required API provided by the `cashier` (producer).
+The contract should go here `cashier/src/test/resources/contracts/rest/payment/cashier-accepts-payment.groovy`.
+After providing the contract the stubs need to be generated to allow the `customer` to write tests against the API.
+Use `@AutoConfigureStubRunner` to implement a test on consumer side which uses the wiremock stub and verfies the
+usage of the API by the `customer` (consumer).
+
+
+
+==== Step by step
+
+. Copy this contract +
+
+  package contracts.rest.payment
+  org.springframework.cloud.contract.spec.Contract.make {
+    description "should accept payment for order and return payment details."
+    request {
+        url "/order/1/payment"
+        method POST()
+        headers {
+            contentType applicationJson()
+        }
+        body(amountAsked: 3)
+    }
+    response {
+        status OK()
+        headers {
+            contentType applicationJson()
+        }
+        body (
+            amountAsked: 2.86,
+            amountGiven: 3,
+            changeReturned: 0.14
+        )
+    }
+  }
+
+
+to `cashier/src/test/resources/contracts/rest/payment/cashier-accepts-payment.groovy`
+
+. In the `cashier` module run `mvn clean install -DskipTests` to generate the stubs and install them in the local Maven
+  repository.
+
+. In the `customer` module create a test `de.fabiankrueger.scc.customer.CustomerPaysOrderTest`
+
+. Annotate the test class with `@AutoConfigureStubRunner` annotation and set the required properties
+
+. Create a test method and use e.g. Spring's `RestTemplate` or (better footnote:[RestTemplate is in maintenance mode])
+  `WebClient` to execute calls against the stubbed payment endpoint of the `cashier`
+
+. Verify the correct behaviour of the API using assertions
+
+. Run the test and verify that it passes
+
+
+
+=== Producer
+
+The `cashier` now needs to implement the Api defined by the contract.
+
+==== In short
+
+Create a BaseClass and configure the SCC Maven plugin in `pom.xml` to use this BaseClass for the generated payment API
+test. Implement the endpoint in the existing `CashierController` and verify that the generated tests succeed.
+
+==== Step by step
+
+. In the `cashier` module create an abstract base class `de.fabiankrueger.scc.cashier.PaymentTestBase` in `src/test/java/`
+
+. Annotate the BaseClass with `@WebMvcTest(CashierController.class)` to initialize the Controller for integration test.
+
+. Annotate the BaseClass with `@AutoConfigureMockMvc` so Spring creates an instance of `MockMvc` for you.
+
+. Add a member of type `MockMvc` and add `@Autowired` to it to make Spring inject the configured `MockMvc` instance into
+  the test.
+
+. Define a member of type `CashierService` and annotate it with `@MockBean` to make Spring inject a Mockito mock for the
+  `CashierService`.
+
+. Create a `public void setup()` method and annotate it with `@BeforeEach`
+
+. In the setup method initialize RestAssured and pass the mockMvc instance to it ``RestAssuredMockMvc.mockMvc(mockMvc)`.
+  RestAssured will be used in the generated SCC test to call the payment endpoint.
+
+. Record the expected behaviour to the `cashierService` using Mockito's `when(..).thenReturn(..)` syntax
+
+. Configure a new `<baseClassMapping>` in the SCC plugin defintion in `pom.xml` that maps the new BaseClass to the
+  contract.
+
+. Let SCC generate the tests by running `mvn clean install -DskipTests` and  have a look at the generated test in the
+  ``cashier``s target dir.
+
+. If everything looks good run the generated tests for the `cashier`, e.g. by running `mvn clean test`
+
+
+
+==== Resources
+* https://cloud.spring.io/spring-cloud-contract/1.2.x/multi/multi__spring_cloud_contract_stub_runner.html=_common[StubRunner properties]
+
+
+
+
+== Example 2: Cashier places the Order (async messaging)
+
+The `barista` has to be informed about new orders to prepare but the `cashier` should not wait for the order to be
+prepared until she can accept a new order. We can solve this situation by using asynchronuous communication using
+messaging.
+
+Spring cloud Contract can use different messaging abstractions:
+
+* Apache Camel
+* Spring Integration
+* Spring Cloud Stream
+* Spring AMQP
+* Spring JMS (requires embedded broker)
+* Spring Kafka (requires embedded broker)
+
+We use Spring Cloud Stream with Kafka in this example.
+
+[plantuml, "example2", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+actor Client <<Customer>>
+participant Cashier
+participant Barista
+
+Client -> Cashier : POST: /order/1/payment \n\
+{\n\
+    'amount': 3\n\
+}
+activate Cashier
+
+group Example 2 (Messaging)
+
+Cashier -> Barista : <<async>> orderPlacedEvent(\n\
+{\n\
+    'orderId': 1,\n\
+    'product': 'coffee',\n\
+    'qty': 2\n\
+})
+activate Barista
+end
+
+
+Cashier -> Client : return \n\
+{\n\
+    'amountAsked': 2.86,\n\
+    'amountGiven': 3,\n\
+    'changeReturned': 0.14}\n\
+}
+deactivate Cashier
+@enduml
+....
+
+
+
+=== Consumer
+
+* Again the consumer (`barista`) defines the required
+link:./cashier/src/test/resources/contracts/messaging/order/cashier-publishes-order-processed-event.groovy[contract,window=_blank]
+
+* The contract describes the message and how the sending is triggered (TODO: add link to reference)
+
+* After defining the contract we can generate the stubs and use them in the
+link:./barista/src/test/java/de/fabiankrueger/scc/barista/OrdersPlacedTest.java[test on consumer side] (`barista`).
+
+* The sending of messages is done by a `StubFinder` provided by SCC and injected with `@Autowired` into the test. TODO: add link to StubFinder in reference
+
+
+
+=== Producer
+* To trigger the sending of the message to Kafka (actually the mocked binder provided by Spring Cloud Streams) we define a method in the
+link:./cashier/src/test/java/de/fabiankrueger/scc/cashier/baseclasses/OrderPlacedEventBase.java[BaseClass] for this test
+
+* With SCC you need to annotate the BaseClass with `@AutoConfigureMessageVerifier` annotation
+
+* We need no web endpoint, so we can disable the webEnvironment `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)`
+
+* The method uses the `OrderPlacedEventOutboundAdapter` to send a message to the mocked Binder
+
+* The BaseClass needs to be mapped in the SCC plugin configuration in
+link:./cashier/pom.xml[pom.xml, window=_blank]
+
+
+
+
+== Exercise 2: Barista prepared the Order (async messaging)
+
+[plantuml, "exercise-2", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+actor Client <<Customer>>
+participant Barista
+
+group Exercise 2 (Messaging)
+
+Barista -> Client : <<async>> orderPreparedEvent(\n\
+{\n\
+    'orderId': 1\n\
+})
+deactivate Barista
+end
+@enduml
+....
+
+=== Setup
+You can checkout the branch `exercise-2` to start +
+You find the solution in branch `master`
+
+=== Consumer
+`customer` (consumer) wants to be informed if the order has been prepared.
+`customer` listens for `OrderPreparedEvent` messages on the Kafka topic `order-prepared`.
+
+==== In short
+After preparing the order the `barista` will publish the `OrderPreparedEvent` message on the topic `order-prepared`.
+Define a contract that verifies that a message with payload
+
+  {
+    "orderId": 1
+  }
+
+and header
+
+  "barista": "Jane Doe"
+
+is published to the correct topic and provide the contract to `barista` (producer).
+Configure the Spring Cloud Contract plugin in the ``barista``'s `pom.xml`.
+Then create the stubs and write a test for the `customer` against the created stub.
+
+
+==== Step by step
+* Create a contract `src/test/resources/contracts/order/prepared/publish-order-prepared-event.groovy` in the `barista` module
+
+    package contracts.order.prepared
+    org.springframework.cloud.contract.spec.Contract.make {
+        description 'Barista publishes OrderPreparedEvent'
+        label 'orderPreparedEvent'
+        input {
+            triggeredBy('publishOrderPreparedEvent()')
+        }
+        outputMessage {
+            sentTo('orders-prepared')
+            body('''{ "orderId" : "1" }''')
+            headers {
+                header('barista', 'Jane Doe')
+            }
+        }
+    }
+
+* In the `barista` module run `mvn clean install -DskipTests` to generate the stubs and install them to your local maven repository
+* Create a test `de.fabiankrueger.scc.customer.CustomerReceivesPreparedOrderTest` in the `src/test/java` dir of the `customer` module
+* Annotate the test class with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)`
+* Annotate the test class with `@AutoConfigureStubRunner(ids = "de.fabiankrueger.scc:barista:+:stubs", stubsMode = StubRunnerProperties.StubsMode.LOCAL)`
+* Inject a mocked `CustomerService` bean by defining a member `customerService` of type `CustomerService` and annotate it with `@MockBean`
+* Inject a `StubFinder` into the test using `@Autowired`.
+The `StubFinder` is provided by SCC and is used to trigger the stub to send a message as defined in the contract
+* Create a test method which triggers the sending of an inbound `OrderPreparedEvent` as defined in the contract  using `stubFinder.trigger("orderPreparedEvent")`
+* Verify that the `customerService.onOrderPrepared(OrderPrepapredEvent, String)` method gets called when the message is received.
+  Use Mockito's `ArgumentCaptor` to capture the parameters passed into the method
+* Assert that the `orderId` of the `OrderPreparedEvent` passed into the `onOrderPrepared(...)` method matches the value defined in the contract
+* Assert that the `barista` header passed into the `onOrderPrepared(...)` method matches the value defined in the contract
+* Run the test and verify that it passes
+
+=== Producer
+When the `barista` prepared an order she should send an `OrderPreparedEvent` as defined in the contract to the `order-prepared` topic.
+
+==== In short
+Create a BaseClass and configure Spring Cloud Config to use this BaseClass for the producer tests of `barista`.
+The `BaristaService` should use the existing `OrderPreparedOutboundAdapter` to send a message that fulfills the given contract.
+Use Maven to generate and run the test to verify that the `barista` fulfills the contract.
+
+==== Step by step
+* Create an abstract base class `de.fabiankrueger.scc.barista.baseclasses.OrderPreparedBase` in `src/test/java` of the `barista` module.
+
+* Configure the `spring-cloud-contract-maven-plugin` plugin in `barista` module
+** `de.fabiankrueger.scc.barista.baseclasses` should be used as package for base classes.
+   Use `<packageWithBaseClasses>` to achieve this
+** The tests generated by SCC should have `de.fabiankrueger.scc.barista` as base package for tests.
+   Use `<basePackageForTests>` to achieve this
+
+* Annotate the base class with `@AutoConfigureMessageVerifier`
+* Annotate the base class with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)`
+* Inject existing `de.fabiankrueger.scc.barista.OrderPreparedOutboundAdapter` to the base class using `@Autowired`
+* Create a method `publishOrderPreparedEvent` in the base class.
+  This is the method defined in the contract which triggers the sending of the message
+* The method should create a `OrderPreparedEvent` as defined in the contract and send it to Kafka using the `OrderPreparedOutboundAdapter.publish(...)` method
+
+=== Resources
+* https://cloud.spring.io/spring-cloud-contract/reference/html/[Reference Documentation]
+* https://github.com/spring-cloud-samples/spring-cloud-contract-samples/blob/master/docs/tutorials/spring_cloud_contract_advanced.adoc[Spring Cloud Contract Tutorial on GitHub]
+* https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-stub-triggering[Use StubFinder to trigger sending of messages]
+* https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#contract-dsl[Contract DSL Reference]
+* https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#contract-groovy[Contract DSL YML Schema]
+* https://learning.oreilly.com/videos/hands-on-guide-to/9780135598436[Hands-On Guide to Spring Cloud Contract on O'Reilly (Video)]

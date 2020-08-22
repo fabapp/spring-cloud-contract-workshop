@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.fabiankrueger.scc</groupId>
+        <artifactId>coffeeshop</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>cashier</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <java.version>8</java.version>
+        <spring-cloud.version>Hoxton.SR7</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <!-- spring cloud contract: producer -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- web: RestController -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- database: JpaRepository -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- database: InMemory database -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+        </dependency>
+
+        <!-- messaging: Kafka -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-binder-kafka</artifactId>
+        </dependency>
+        <!-- messaging test: test binder -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- messaging test: EmbeddedKafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- messaging test: async -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.0.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- spring boot test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-contract-maven-plugin</artifactId>
+                <version>2.2.4.RELEASE</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <testFramework>JUNIT5</testFramework>
+                    <!-- single base class for all tests
+                            https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/htmlsingle/#maven-single-base
+                    -->
+                    <!-- baseClassForTests>de.fabiankrueger.scc.cashier.baseclasses.SccWebBaseClass</baseClassForTests -->
+
+                    <!-- base class by mapping
+                            https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/htmlsingle/#by-mapping
+
+                            finds required base classes by regex on contract package
+                            baseClassForTests (if given) would act as fallback if mapping is not found
+                    -->
+                    <baseClassMappings>
+                        <baseClassMapping>
+                            <contractPackageRegex>.*rest.order.*</contractPackageRegex>
+                            <baseClassFQN>de.fabiankrueger.scc.cashier.baseclasses.OrderTestBase</baseClassFQN>
+                        </baseClassMapping>
+                        <baseClassMapping>
+                            <contractPackageRegex>.*rest.payment.*</contractPackageRegex>
+                            <baseClassFQN>de.fabiankrueger.scc.cashier.baseclasses.PaymentTestBase</baseClassFQN>
+                        </baseClassMapping>
+                        <baseClassMapping>
+                            <contractPackageRegex>.*messaging.order.*</contractPackageRegex>
+                            <baseClassFQN>de.fabiankrueger.scc.cashier.baseclasses.OrderPlacedEventBase</baseClassFQN>
+                        </baseClassMapping>
+                    </baseClassMappings>
+                    <!-- Note:
+                            the config <contractPackageRegex>.*messaging.order.*</contractPackageRegex>
+                            generates tests in package org.springframework.cloud.contract.verifier.tests
+                            which results in the test not being able to find the a class annotated with @SpringBootConfiguration
+                            through a package scan because the base packages differ
+                            This can be adjusted using the <basePackageForTests> which explicitly sets the package for generated tests
+                    -->
+                    <basePackageForTests>de.fabiankrueger.scc.cashier</basePackageForTests>
+
+                    <!-- Explicitly set the integration to use for http tests
+                            https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/htmlsingle/#feature-integrations -->
+                    <testMode>MOCKMVC</testMode>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
