@@ -27,6 +27,11 @@ public class CustomerReceivesPreparedOrderTest {
 
         stubFinder.trigger("orderPreparedEvent");
 
+        verifyInboundMessageHandling();
+
+    }
+
+    private void verifyInboundMessageHandling() {
         ArgumentCaptor<OrderPreparedEvent> orderPreparedEventArgumentCaptor = ArgumentCaptor.forClass(OrderPreparedEvent.class);
         ArgumentCaptor<String> baristaArgumentCaptor = ArgumentCaptor.forClass(String.class);
         verify(customerService).onOrderPrepared(orderPreparedEventArgumentCaptor.capture(), baristaArgumentCaptor.capture());
@@ -35,7 +40,11 @@ public class CustomerReceivesPreparedOrderTest {
         OrderPreparedEvent orderPreparedEvent = orderPreparedEventArgumentCaptor.getValue();
         assertThat(barista).isEqualTo("Jane Doe");
         assertThat(orderPreparedEvent.getOrderId()).isEqualTo(1L);
-
     }
 
+    @Test
+    public void customerReceivesPreparedOrderWhenOrderWasProcessed() {
+        stubFinder.trigger("orderProcessed");
+        verifyInboundMessageHandling();
+    }
 }

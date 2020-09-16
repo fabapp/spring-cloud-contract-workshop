@@ -601,6 +601,45 @@ Use Maven to generate and run the test to verify that the `barista` fulfills the
   This is the method defined in the contract which triggers the sending of the message
 * The method should create a `OrderPreparedEvent` as defined in the contract and send it to Kafka using the `OrderPreparedOutboundAdapter.publish(...)` method
 
+
+
+
+== Exercise 3: Barista is a processor and not a source
+
+Until now we triggered the sending of a `OrderProcessedEvent` in the `barista` module by directly calling the `publish`
+method of the `OrderPreparedOutboundAdapter`. If the `publish(..)` would be triggered by e.g. a scheduler and not as a
+result of an inbound message the `barista` would be a source for these events. +
+But the preparation of coffees is triggered by an inbound message and the result is sent as an outbound message.
+This makes the Barista a processor (output message triggered by input message).
+SCC allows to reflect this in a contract, see the https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-scenario2[documentation].
+
+
+
+=== Producer
+
+Create a new contract that reflects the ``barista``'s nature of a processor by defining an inbound message that triggers
+the publication of an outbound message.
+Take a look at the generated test to understand the difference between testing a source and a processor.
+
+
+
+=== Consumer
+
+Write a new test (you can use the existing test class) in `consumer` and use the new contract to trigger sending a message
+to the `order-prepared` topic. Alternatively just change the label that triggers sending the message to the `order-prepared` topic.
+Alternatively just change the label that triggers sending the message in the existing test.
+.
+
+
+
+
+== Exercise 4: Use SCC to test the customer as message consumer
+See documentation about https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-scenario3[Messaging with no output message]
+and use SCC to test the `consumer` consuming ``OrderPreparedEvent``s
+
+
+
+
 === Resources
 * https://cloud.spring.io/spring-cloud-contract/reference/html/[Reference Documentation]
 * https://github.com/spring-cloud-samples/spring-cloud-contract-samples/blob/master/docs/tutorials/spring_cloud_contract_advanced.adoc[Spring Cloud Contract Tutorial on GitHub]
