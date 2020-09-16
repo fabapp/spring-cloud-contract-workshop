@@ -95,17 +95,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-contract-maven-plugin</artifactId>
-                <version>2.2.4.RELEASE</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <testFramework>JUNIT5</testFramework>
-                    <baseClassForTests>de.fabiankrueger.scc.customer.SccMessagingBaseClass</baseClassForTests>
-                    <basePackageForTests>de.fabiankrueger.scc.customer</basePackageForTests>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
