@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 public class CashierController {
@@ -20,8 +22,8 @@ public class CashierController {
     }
 
     @PostMapping("/order/{orderId}/payment")
-    public ResponseEntity<Payment> processPayment(@RequestBody Payment payment, @PathVariable Long orderId) {
-        final Payment processedPayment = cashierService.processPayment(orderId, payment);
+    public ResponseEntity<Payment> processPayment(@RequestBody Map<String, Double> payment, @PathVariable Long orderId) {
+        final Payment processedPayment = cashierService.processPayment(orderId, payment.get("amountGiven"));
         return ResponseEntity.ok(processedPayment);
     }
 }

@@ -1,27 +1,32 @@
 package de.fabiankrueger.scc.cashier;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.Embeddable;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Getter
-@Setter
 @EqualsAndHashCode
 @NoArgsConstructor
 @Embeddable
 public class Payment {
     private BigDecimal amountAsked;
     private BigDecimal amountGiven;
-    private BigDecimal changeReturned;
 
-    public Payment(double amount, double paid) {
-        this.amountAsked = new BigDecimal(amount).setScale(2, RoundingMode.HALF_UP);
-        this.amountGiven = new BigDecimal(paid).setScale(2, RoundingMode.HALF_UP);
-        this.changeReturned = this.amountGiven.subtract(this.amountAsked);
+    @JsonCreator
+    public Payment(@JsonProperty("amountAsked") double amountAsked, @JsonProperty("amountGiven") double amountGiven) {
+        this.amountAsked = new BigDecimal(amountAsked).setScale(2, RoundingMode.HALF_UP);
+        this.amountGiven = new BigDecimal(amountGiven).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Transient
+    public BigDecimal getChangeReturned() {
+        return this.amountGiven.subtract(this.amountAsked);
     }
 }

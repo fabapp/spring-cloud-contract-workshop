@@ -2,6 +2,7 @@ package de.fabiankrueger.scc.cashier;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +19,10 @@ public class CashierService {
         return order;
     }
 
-    public Payment processPayment(Long orderId, Payment customerPyment) {
+    @Transactional
+    public Payment processPayment(Long orderId, Double amountGiven) {
         final Order order = orderRepository.getOne(orderId);
-        Payment payment = new Payment(order.getAmount(), customerPyment.getAmountGiven().doubleValue());
+        Payment payment = new Payment(order.getAmount(), amountGiven);
         order.setPayment(payment);
         publishOrderPlacedEvent(order);
         return payment;

@@ -1,7 +1,6 @@
 package de.fabiankrueger.scc.barista;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,7 +18,7 @@ public class BaristaService {
             Thread.sleep(200);
             OrderPreparedEvent orderPreparedEvent = new OrderPreparedEvent();
             orderPreparedEvent.setOrderId(orderPlacedEvent.getOrderId());
-            publishOrderPreparedEvent(orderPreparedEvent);
+            // publishOrderPreparedEvent(orderPreparedEvent);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

@@ -12,8 +12,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(CashierController.class)
@@ -35,13 +33,12 @@ public abstract class PaymentTestBase {
         paidOrder.setProduct("coffee");
         paidOrder.setQty(2);
         final double amountAsked = 2.86;
-        paidOrder.setAmount(amountAsked);
-        Payment payment = new Payment();
         final double amountGiven = 3.0;
-        payment.setAmountGiven(new BigDecimal(amountGiven));
+        paidOrder.setAmount(amountAsked);
+        Payment payment = new Payment(amountAsked, amountGiven);
         paidOrder.setPayment(payment);
         Payment processedPayment = new Payment(amountAsked, amountGiven);
-        when(cashierService.processPayment(paidOrder.getId(), payment)).thenReturn(processedPayment);
+        when(cashierService.processPayment(paidOrder.getId(), amountGiven)).thenReturn(processedPayment);
     }
 
 }
