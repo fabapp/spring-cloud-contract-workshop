@@ -12,11 +12,11 @@ Application design comes after simplicity for the sake of the example.
 
 == Get started
 * check out the repo from GitHub: https://github.com/fabapp/spring-cloud-contract-workshop, +
-  e.g. `git clone https://github.com/fabapp/spring-cloud-contract-workshop`
-
-* switch to the branch `exercise-1`, e.g. by typing `git checkout exercise-1` on your console
+  `git clone https://github.com/fabapp/spring-cloud-contract-workshop`
 
 * Import as project into your IDE
+
+* switch to the branch `exercise-1`, e.g. by typing `git checkout exercise-1` on your console
 
 == A diagram is worth a thousand words
 [plantuml, "example-coffeeshop", "png"]
@@ -68,7 +68,7 @@ end
 group Exercise 1 (REST)
 Client -> Cashier : POST: /order/1/payment \n\
 {\n\
-    'amount': 3\n\
+    'amountGiven': 3\n\
 }
 activate Cashier
 end
@@ -89,8 +89,8 @@ group Exercise 1
 Cashier -> Client : return \n\
 {\n\
     'amountAsked': 2.86,\n\
-    'paid': 3,\n\
-    'change': 0.14}\n\
+    'amountGiven': 3,\n\
+    'changeReturned': 0.14}\n\
 }
 deactivate Cashier
 end
@@ -222,6 +222,10 @@ She calculates the price and returns the order with all information.
 Now that we've seen how Spring Cloud Contract guarantees the implementation of the Api by the producer as expected by
 the consumer. Let's get our hands dirty and define a contract for the payment flow.
 
+=== Setup
+* switch to branch `exercise-1`
+* Solution can be found in branch `exercise-2`
+
 [plantuml, "exercise-1", "png"]
 ....
 @startuml
@@ -297,7 +301,7 @@ usage of the API by the `customer` (consumer).
         headers {
             contentType applicationJson()
         }
-        body(amountAsked: 3)
+        body(amountGiven: 3)
     }
     response {
         status OK()
@@ -338,7 +342,9 @@ The `cashier` now needs to implement the Api defined by the contract.
 ==== In short
 
 Create a BaseClass and configure the SCC Maven plugin in `pom.xml` to use this BaseClass for the generated payment API
-test. Implement the endpoint in the existing `CashierController` and verify that the generated tests succeed.
+test. Use the https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/html/maven-project.html#by-mapping[`<baseClassMapping>`]
+approach to do this.
+Activate the endpoint in the existing `CashierController` and verify that the generated tests succeed.
 
 ==== Step by step
 
@@ -457,13 +463,12 @@ deactivate Cashier
 * Again the consumer (`barista`) defines the required
 link:./cashier/src/test/resources/contracts/messaging/order/cashier-publishes-order-processed-event.groovy[contract,window=_blank]
 
-* The contract describes the message and how the sending is triggered (TODO: add link to reference)
+* The contract describes the message and which label to use to trigger the message sending.
 
 * After defining the contract we can generate the stubs and use them in the
 link:./barista/src/test/java/de/fabiankrueger/scc/barista/OrdersPlacedTest.java[test on consumer side] (`barista`).
 
-* The sending of messages is done by a `StubFinder` provided by SCC and injected with `@Autowired` into the test. TODO: add link to StubFinder in reference
-
+* The sending of messages is done by a https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-trigger-label[`StubFinder`] provided by SCC and injected with `@Autowired` into the test.
 
 
 === Producer
@@ -528,7 +533,7 @@ You find the solution in branch `master`
 
 === Consumer
 `customer` (consumer) wants to be informed if the order has been prepared.
-`customer` listens for `OrderPreparedEvent` messages on the Kafka topic `order-prepared`.
+The `customer` listens for `OrderPreparedEvent` messages on the Kafka topic `order-prepared`.
 
 ==== In short
 After preparing the order the `barista` will publish the `OrderPreparedEvent` message on the topic `order-prepared`.
@@ -644,7 +649,9 @@ and use SCC to test the `consumer` consuming ``OrderPreparedEvent``s
 
 
 === Resources
+* https://spring.io/projects/spring-cloud-contract#learn[Spring Cloud Contract project]
 * https://cloud.spring.io/spring-cloud-contract/reference/html/[Reference Documentation]
+* https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/html/maven-project.html[Maven configuration]
 * https://github.com/spring-cloud-samples/spring-cloud-contract-samples/blob/master/docs/tutorials/spring_cloud_contract_advanced.adoc[Spring Cloud Contract Tutorial on GitHub]
 * https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-stub-triggering[Use StubFinder to trigger sending of messages]
 * https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#contract-dsl[Contract DSL Reference]
