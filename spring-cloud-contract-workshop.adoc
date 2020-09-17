@@ -625,9 +625,8 @@ Take a look at the generated test to understand the difference between testing a
 
 === Consumer
 
-Write a new test (you can use the existing test class) in `consumer` and use the new contract to trigger sending a message
+Write a new test (you can use the existing test class) in `customer` and use the new contract to trigger sending a message
 to the `order-prepared` topic. Alternatively just change the label that triggers sending the message to the `order-prepared` topic.
-Alternatively just change the label that triggers sending the message in the existing test.
 .
 
 
@@ -635,7 +634,7 @@ Alternatively just change the label that triggers sending the message in the exi
 
 == Exercise 4: Use SCC to test the customer as message consumer
 See documentation about https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#features-messaging-scenario3[Messaging with no output message]
-and use SCC to test the `consumer` consuming ``OrderPreparedEvent``s
+and use SCC to test the `customer` consuming ``OrderPreparedEvent``s
 
 
 
