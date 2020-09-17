@@ -1,0 +1,3 @@
+See the workbook: https://github.com/fabapp/spring-cloud-contract-workshop/blob/master/spring-cloud-contract-workshop.adoc
+
+You might want to open it with a tool that renders inline diagrams, e.g. Atom or IntelliJ with asciidoc extensions enabled.

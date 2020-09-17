@@ -11,8 +11,11 @@ The focus is on the communication and the contracts describing this communicatio
 Application design comes after simplicity for the sake of the example.
 
 == Get started
-* check out the repo from GitHub: https://github.com/fabapp/spring-cloud-contract-workshop
-* switch to the branch `exercise-1`
+* check out the repo from GitHub: https://github.com/fabapp/spring-cloud-contract-workshop, +
+  e.g. `git clone https://github.com/fabapp/spring-cloud-contract-workshop`
+
+* switch to the branch `exercise-1`, e.g. by typing `git checkout exercise-1` on your console
+
 * Import as project into your IDE
 
 == A diagram is worth a thousand words
