@@ -835,19 +835,24 @@ Let's modify the ``customer``'s integration test to pull the stubs from your git
 
 
 
-== Exercise 7: Using @EnableStubRunnerServer
+== Exercise 7.1:
 You can use a basic spring boot application annotated with `@EnableStubRunnerServer` to act as server for your stubs.
+
+For sake of speed, we can use a version provided by scc
+
+* Download spring-cloud-contract-stubrunner-boot to a directory of your choice
+`wget -O stub-runner.jar 'https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar'`
+
+* Open the file `scripts/stub-runner-server.sh`
+* adjust the path to the downloaded jar
+* run the script or command
+* Use the file `scripts/order-coffee.http` to send requests against the stubrunner server.
+
+== Exercise 7.2 Using @EnableStubRunnerServer
 
 NOTE: https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#features-stub-runner-boot[Stub Runner Boot]
 
 * Create a new Module or new project `stub-runner-server` which contains a Spring Boot starter application (you can use IntelliJ or start.spring.io to do so).
-
-* The application requires this dependency: +
-<dependency>
-<groupId>org.springframework.cloud</groupId>
-<artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
-<scope>compile</scope>
-</dependency>
 
 * The only required dependency is the following (it is important that the scope is `compile` (which is the default)
 [source, xml]
@@ -873,12 +878,7 @@ NOTE: https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#featur
   --stubrunner.ids="de.fabiankrueger.scc:cashier:1.0-SNAPSHOT:stubs:8083"`
 
 * call the provided stub:
-* You can use `scripts/order-coffee.sh` for this.
-
-e.g. with stubrunner
-* Discover StubRunner Boot -> provide stubs and messages `java -jar stubrunner.jar --stubrunner.stubsMode="LOCAL" --stubrunner.ids="groupId:artifactId:version:stubs:9876 --server.port:8083` +
-using  `@EnableStubRunnerServer`
-
+* You can use `scripts/order-coffee.http` for this or use the integration test(s)
 
 
 == More features

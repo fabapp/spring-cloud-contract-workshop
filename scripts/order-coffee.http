@@ -35,4 +35,7 @@ Content-Type: application/json
   "amountGiven": 3
 }
 
-###
+### spring-cloud-contract-stubrunner-boot
+
+GET http://localhost:8085/stubs
+GET http://localhost:8085/triggers
