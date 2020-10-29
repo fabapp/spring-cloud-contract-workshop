@@ -5,12 +5,17 @@ org.springframework.cloud.contract.spec.Contract.make {
     description "should accept payment for order and return payment details."
 
     request {
-        url "/order/1/payment"
+        url $(
+                client(regex("/order/([0-9]+)/payment")),
+                server(execute('generateUrl()'))
+        )
         method POST()
         headers {
             contentType applicationJson()
         }
-        body(amountGiven: 3)
+        body(
+                amountGiven: 3.0
+        )
     }
 
     response {
@@ -19,9 +24,9 @@ org.springframework.cloud.contract.spec.Contract.make {
             contentType applicationJson()
         }
         body (
-            amountAsked: 2.86,
-            amountGiven: 3,
-            changeReturned: 0.14
+                amountAsked: 2.86,
+                amountGiven: fromRequest().body('$.amountGiven'),
+                changeReturned: 0.14
         )
     }
 }

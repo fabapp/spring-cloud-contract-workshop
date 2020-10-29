@@ -12,6 +12,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Random;
+
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(CashierController.class)
@@ -38,7 +42,10 @@ public abstract class PaymentTestBase {
         Payment payment = new Payment(amountAsked, amountGiven);
         paidOrder.setPayment(payment);
         Payment processedPayment = new Payment(amountAsked, amountGiven);
-        when(cashierService.processPayment(paidOrder.getId(), amountGiven)).thenReturn(processedPayment);
+        when(cashierService.processPayment(anyLong(), eq(amountGiven))).thenReturn(processedPayment);
     }
 
+    public String generateUrl() {
+        return "/order/" + Math.abs(new Random().nextInt()) + "/payment";
+    }
 }

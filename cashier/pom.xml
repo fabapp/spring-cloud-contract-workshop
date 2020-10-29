@@ -148,7 +148,23 @@
                     <!-- Explicitly set the integration to use for http tests
                             https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/htmlsingle/#feature-integrations -->
                     <testMode>MOCKMVC</testMode>
+                    <contractsMode>LOCAL</contractsMode>
+<!--                    <contractsMode>REMOTE</contractsMode>-->
+<!--                    <contractDependency>-->
+<!--                        <groupId>${project.groupId}</groupId>-->
+<!--                        <artifactId>${project.artifactId}</artifactId>-->
+<!--&lt;!&ndash;                        <version>${project.version}</version>&ndash;&gt;-->
+<!--                    </contractDependency>-->
+<!--                    <contractsRepositoryUrl>git://file:///Users/fkrueger/git/spring-cloud-contract-workshop/exercise/contracts-repo/</contractsRepositoryUrl>-->
                 </configuration>
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>pushStubsToScm</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

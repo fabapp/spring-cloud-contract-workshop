@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureStubRunner(
         ids = "de.fabiankrueger.scc:cashier:+:stubs",
         stubsMode = StubRunnerProperties.StubsMode.LOCAL)
+// @AutoConfigureStubRunner(ids = "de.fabiankrueger.scc:cashier:1.0-SNAPSHOT:stubs", stubsMode = StubRunnerProperties.StubsMode.REMOTE, repositoryRoot = "git://file:///Users/fkrueger/git/spring-cloud-contract-workshop/exercise/contracts-repo/")
 public class CustomerPaysOrderTest {
 
     @StubRunnerPort("cashier")
@@ -46,7 +47,7 @@ public class CustomerPaysOrderTest {
         String expectedResponse =   "{" +
                                         "\"amountAsked\": 2.86," +
                                         "\"amountGiven\": 3," +
-                                        "\"changeReturned\": 0.14}" +
+                                        "\"changeReturned\": 0.14" +
                                     "}";
         JSONAssert.assertEquals(expectedResponse, bodyJson, true);
     }

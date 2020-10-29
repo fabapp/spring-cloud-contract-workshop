@@ -1,9 +1,25 @@
+#POST http://localhost:8083/order
+#Content-Type: application/json
+#
+#{
+#  "product": "coffee",
+#  "qty": 1
+#}
+#
+#> {%
+#    client.global.set("orderId", response.body.id);
+#%}
+#
+####
+
+
 POST http://localhost:8083/order
 Content-Type: application/json
 
 {
   "product": "coffee",
-  "qty": 1
+  "qty": 2,
+  "mobileNumber": "+49 176 5546782"
 }
 
 > {%
@@ -16,8 +32,7 @@ POST http://localhost:8083/order/{{orderId}}/payment
 Content-Type: application/json
 
 {
-  "amountGiven": 10
+  "amountGiven": 3
 }
 
 ###
-

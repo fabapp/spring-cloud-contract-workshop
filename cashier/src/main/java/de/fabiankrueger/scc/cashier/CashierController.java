@@ -26,4 +26,15 @@ public class CashierController {
         final Payment processedPayment = cashierService.processPayment(orderId, payment.get("amountGiven"));
         return ResponseEntity.ok(processedPayment);
     }
+/*
+    @GetMapping("/order/{id}")
+    ResponseEntity<Order> getOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(cashierService.getOrderById(id));
+    }
+
+    @GetMapping("/order")
+    ResponseEntity<List<Order>> getOrder(@RequestParam("status") String status) {
+        return ResponseEntity.ok(cashierService.getOrdersByStatus(status));
+    }
+*/
 }

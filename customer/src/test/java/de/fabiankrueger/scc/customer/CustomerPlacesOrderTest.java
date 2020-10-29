@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureStubRunner(ids = "de.fabiankrueger.scc:cashier:+:stubs", stubsMode = StubRunnerProperties.StubsMode.LOCAL)
+//@AutoConfigureStubRunner(ids = "de.fabiankrueger.scc:cashier:1.0-SNAPSHOT:stubs", stubsMode = StubRunnerProperties.StubsMode.REMOTE, repositoryRoot = "git://file:///Users/fkrueger/git/spring-cloud-contract-workshop/exercise/contracts-repo/")
 public class CustomerPlacesOrderTest {
 
 
@@ -29,6 +30,7 @@ public class CustomerPlacesOrderTest {
         // Create order
         Order order = new Order();
         order.setQty(2);
+        order.setMobileNumber("+49 160 5563487");
         order.setProduct("coffee");
 
         // send order request to Cashier endpoint (provided as scc stub)
@@ -43,7 +45,7 @@ public class CustomerPlacesOrderTest {
 
         // verify response
         assertThat(response.statusCode()).isSameAs(HttpStatus.OK);
-        String expectedJsonResponse = "{\"id\": 1,\"product\": \"coffee\", \"qty\":2, \"amount\":2.86}";
+        String expectedJsonResponse = "{\"id\": 1,\"product\": \"coffee\", \"qty\":2, \"amount\":2.86, \"mobileNumber\": \"+49 160 5563487\", \"timeOrdered\": \"2016-12-31T23:30:59Z\"}";
         final String json = response.bodyToMono(String.class).block();
         JSONAssert.assertEquals(expectedJsonResponse, json, true);
     }

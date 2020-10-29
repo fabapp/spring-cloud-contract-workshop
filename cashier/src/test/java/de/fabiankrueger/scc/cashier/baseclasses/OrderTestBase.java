@@ -11,6 +11,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -28,13 +30,13 @@ public abstract class OrderTestBase {
     public void setup() {
         RestAssuredMockMvc.mockMvc(mockMvc);
 
-        Order processedOrder = new Order();
-        processedOrder.setId(1L);
-        processedOrder.setProduct("coffee");
-        processedOrder.setQty(2);
-        processedOrder.setAmount(2.86);
-
-        when(cashierService.processOrder(any(Order.class))).thenReturn(processedOrder);
+        when(cashierService.processOrder(any(Order.class))).thenAnswer(o -> {
+            Order processedOrder = (Order) o.getArgument(0);
+            processedOrder.setId(1L);
+            processedOrder.setTimeOrdered(Instant.now());
+            processedOrder.setAmount(2.86);
+            return processedOrder;
+        });
     }
 
 }

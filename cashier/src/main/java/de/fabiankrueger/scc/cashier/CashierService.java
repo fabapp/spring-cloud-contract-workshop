@@ -12,6 +12,7 @@ public class CashierService {
     private final OrderRepository orderRepository;
     private final OrderPlacedEventOutboundAdapter orderPlacedEventOutboundAdapter;
 
+    @Transactional
     public Order processOrder(Order order) {
         double amount = priceCalculator.calculatePrice(order.getProduct(), order.getQty());
         order.setAmount(amount);
@@ -32,4 +33,21 @@ public class CashierService {
         OrderPlacedEvent orderPlacedEvent = new OrderPlacedEvent(order.getId(), order.getProduct(), order.getQty());
         orderPlacedEventOutboundAdapter.publish(orderPlacedEvent);
     }
+
+/*
+    public Order getOrderById(Long id) {
+        return orderRepository.getOne(id);
+    }
+
+    public List<Order> getOrdersByStatus(String status) {
+        return orderRepository.findByStatus(status);
+    }
+
+    public void onOrderPrepared(OrderPreparedEvent payload, String barista) {
+        Long orderId = payload.getOrderId();
+        Order order = orderRepository.getOne(orderId);
+        order.setTimePrepared(Instant.now());
+        order.setBarista(barista);
+    }
+*/
 }
