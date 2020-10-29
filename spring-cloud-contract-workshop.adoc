@@ -224,7 +224,8 @@ the consumer. Let's get our hands dirty and define a contract for the payment fl
 
 === Setup
 * switch to branch `exercise-1`
-* Solution can be found in branch `exercise-2`
+* Solution code can be found in branch `exercise-2`
+* Step by step description can be found link:spring-cloud-contract-workshop-exercise-1-solution.adoc[here]
 
 [plantuml, "exercise-1", "png"]
 ....
@@ -279,102 +280,37 @@ The `customer` receveid the `Order` with an amount to pay.
 Now the `customer` needs to pay his order and sends a POST request with the amount given to the `cashier`.
 The `cashier` processes the payment and returns the information about the payment.
 
-==== In short
-The `customer` (consumer) wants to provide a contract that describes the required API provided by the `cashier` (producer).
-The contract should go here `cashier/src/test/resources/contracts/rest/payment/cashier-accepts-payment.groovy`.
-After providing the contract the stubs need to be generated to allow the `customer` to write tests against the API.
-Use `@AutoConfigureStubRunner` to implement a test on consumer side which uses the wiremock stub and verfies the
-usage of the API by the `customer` (consumer).
 
-
-
-==== Step by step
-
-. Copy this contract +
-
-  package contracts.rest.payment
-  org.springframework.cloud.contract.spec.Contract.make {
-    description "should accept payment for order and return payment details."
-    request {
-        url "/order/1/payment"
-        method POST()
-        headers {
-            contentType applicationJson()
-        }
-        body(amountGiven: 3)
-    }
-    response {
-        status OK()
-        headers {
-            contentType applicationJson()
-        }
-        body (
-            amountAsked: 2.86,
-            amountGiven: 3,
-            changeReturned: 0.14
-        )
-    }
-  }
-
-
-to `cashier/src/test/resources/contracts/rest/payment/cashier-accepts-payment.groovy`
-
-. In the `cashier` module run `mvn clean install -DskipTests` to generate the stubs and install them in the local Maven
-  repository.
-
-. In the `customer` module create a test `de.fabiankrueger.scc.customer.CustomerPaysOrderTest`
-
-. Annotate the test class with `@AutoConfigureStubRunner` annotation and set the required properties
-
-. Create a test method and use e.g. Spring's `RestTemplate` or (better footnote:[RestTemplate is in maintenance mode])
-  `WebClient` to execute calls against the stubbed payment endpoint of the `cashier`
-
-. Verify the correct behaviour of the API using assertions
-
-. Run the test and verify that it passes
-
+* The `customer` (consumer) wants to provide a contract that describes the required API provided by the `cashier` (producer).
+* Create the contract which verifies the correct path, request and response.
+* The contract should go here `cashier/src/test/resources/contracts/rest/payment/cashier-accepts-payment.groovy`.
+* After providing the contract the stubs need to be generated to allow the `customer` to write tests against the API.
+* Run 'mvn clean install -DskipTests' to generate the stubs
+* Create a new test on consumer side annotated with `@AutoConfigureStubRunner` which uses the wiremock stub and verfies the
+  usage of the API by the `customer` (consumer).
+* Verify that the test succeeds and the stibs work as expected
 
 
 === Producer
 
 The `cashier` now needs to implement the Api defined by the contract.
 
-==== In short
-
-Create a BaseClass and configure the SCC Maven plugin in `pom.xml` to use this BaseClass for the generated payment API
-test. Use the https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/html/maven-project.html#by-mapping[`<baseClassMapping>`]
-approach to do this.
-Activate the endpoint in the existing `CashierController` and verify that the generated tests succeed.
-
-==== Step by step
-
-. In the `cashier` module create an abstract base class `de.fabiankrueger.scc.cashier.PaymentTestBase` in `src/test/java/`
-
-. Annotate the BaseClass with `@WebMvcTest(CashierController.class)` to initialize the Controller for integration test.
-
-. Annotate the BaseClass with `@AutoConfigureMockMvc` so Spring creates an instance of `MockMvc` for you.
-
-. Add a member of type `MockMvc` and add `@Autowired` to it to make Spring inject the configured `MockMvc` instance into
-  the test.
-
-. Define a member of type `CashierService` and annotate it with `@MockBean` to make Spring inject a Mockito mock for the
-  `CashierService`.
-
-. Create a `public void setup()` method and annotate it with `@BeforeEach`
-
-. In the setup method initialize RestAssured and pass the mockMvc instance to it ``RestAssuredMockMvc.mockMvc(mockMvc)`.
+* In the `cashier` module create an abstract base class `de.fabiankrueger.scc.cashier.PaymentTestBase` in `src/test/java/`
+* Annotate the base class with `@WebMvcTest(CashierController.class)`  to initialize the Controller for integration test.
+* Inject a MockMvc instance into the test. You can get it with
+[source, java]
+....
+@Autowired
+MockMvc mockMvc;
+....
+* In the setup method initialize RestAssured and pass the mockMvc instance to it ``RestAssuredMockMvc.mockMvc(mockMvc)`.
   RestAssured will be used in the generated SCC test to call the payment endpoint.
-
-. Record the expected behaviour to the `cashierService` using Mockito's `when(..).thenReturn(..)` syntax
-
-. Configure a new `<baseClassMapping>` in the SCC plugin defintion in `pom.xml` that maps the new BaseClass to the
-  contract.
-
-. Let SCC generate the tests by running `mvn clean install -DskipTests` and  have a look at the generated test in the
-  ``cashier``s target dir.
-
-. If everything looks good run the generated tests for the `cashier`, e.g. by running `mvn clean test`
-
+* Record the expected behaviour to the `cashierService` using Mockito's `when(..).thenReturn(..)` syntax
+* Configure the SCC Maven plugin in `pom.xml` to use this BaseClass for the generated payment API test. +
+  Use the https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/html/maven-project.html#by-mapping[`<baseClassMapping>`] approach to do this.
+* Activate the endpoint in the existing `CashierController` and verify that the generated tests succeed.
+* If everything looks good run the generated tests for the `cashier`, e.g. by running `mvn clean test`
+* Have a look at the generated tests and stubs and verify that you understand what happened.
 
 
 ==== Resources
@@ -529,7 +465,8 @@ end
 
 === Setup
 You can checkout the branch `exercise-2` to start +
-You find the solution in branch `master`
+You find the solution in branch `master` +
+Step by step description can be found link:spring-cloud-contract-workshop-exercise-2-solution.adoc[here]
 
 === Consumer
 `customer` (consumer) wants to be informed if the order has been prepared.
@@ -552,38 +489,7 @@ Configure the Spring Cloud Contract plugin in the ``barista``'s `pom.xml`.
 Then create the stubs and write a test for the `customer` against the created stub.
 
 
-==== Step by step
-* Create a contract `src/test/resources/contracts/order/prepared/publish-order-prepared-event.groovy` in the `barista` module
 
-    package contracts.order.prepared
-    org.springframework.cloud.contract.spec.Contract.make {
-        description 'Barista publishes OrderPreparedEvent'
-        label 'orderPreparedEvent'
-        input {
-            triggeredBy('publishOrderPreparedEvent()')
-        }
-        outputMessage {
-            sentTo('orders-prepared')
-            body('''{ "orderId" : "1" }''')
-            headers {
-                header('barista', 'Jane Doe')
-            }
-        }
-    }
-
-* In the `barista` module run `mvn clean install -DskipTests` to generate the stubs and install them to your local maven repository
-* Create a test `de.fabiankrueger.scc.customer.CustomerReceivesPreparedOrderTest` in the `src/test/java` dir of the `customer` module
-* Annotate the test class with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)`
-* Annotate the test class with `@AutoConfigureStubRunner(ids = "de.fabiankrueger.scc:barista:+:stubs", stubsMode = StubRunnerProperties.StubsMode.LOCAL)`
-* Inject a mocked `CustomerService` bean by defining a member `customerService` of type `CustomerService` and annotate it with `@MockBean`
-* Inject a `StubFinder` into the test using `@Autowired`.
-The `StubFinder` is provided by SCC and is used to trigger the stub to send a message as defined in the contract
-* Create a test method which triggers the sending of an inbound `OrderPreparedEvent` as defined in the contract  using `stubFinder.trigger("orderPreparedEvent")`
-* Verify that the `customerService.onOrderPrepared(OrderPrepapredEvent, String)` method gets called when the message is received.
-  Use Mockito's `ArgumentCaptor` to capture the parameters passed into the method
-* Assert that the `orderId` of the `OrderPreparedEvent` passed into the `onOrderPrepared(...)` method matches the value defined in the contract
-* Assert that the `barista` header passed into the `onOrderPrepared(...)` method matches the value defined in the contract
-* Run the test and verify that it passes
 
 === Producer
 When the `barista` prepared an order she should send an `OrderPreparedEvent` as defined in the contract to the `order-prepared` topic.
@@ -593,21 +499,6 @@ Create a BaseClass and configure Spring Cloud Config to use this BaseClass for t
 The `BaristaService` should use the existing `OrderPreparedOutboundAdapter` to send a message that fulfills the given contract.
 Use Maven to generate and run the test to verify that the `barista` fulfills the contract.
 
-==== Step by step
-* Create an abstract base class `de.fabiankrueger.scc.barista.baseclasses.OrderPreparedBase` in `src/test/java` of the `barista` module.
-
-* Configure the `spring-cloud-contract-maven-plugin` plugin in `barista` module
-** `de.fabiankrueger.scc.barista.baseclasses` should be used as package for base classes.
-   Use `<packageWithBaseClasses>` to achieve this
-** The tests generated by SCC should have `de.fabiankrueger.scc.barista` as base package for tests.
-   Use `<basePackageForTests>` to achieve this
-
-* Annotate the base class with `@AutoConfigureMessageVerifier`
-* Annotate the base class with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)`
-* Inject existing `de.fabiankrueger.scc.barista.OrderPreparedOutboundAdapter` to the base class using `@Autowired`
-* Create a method `publishOrderPreparedEvent` in the base class.
-  This is the method defined in the contract which triggers the sending of the message
-* The method should create a `OrderPreparedEvent` as defined in the contract and send it to Kafka using the `OrderPreparedOutboundAdapter.publish(...)` method
 
 
 
@@ -648,7 +539,357 @@ and use SCC to test the `consumer` consuming ``OrderPreparedEvent``s
 
 
 
-=== Resources
+
+== Dynamic properties
+There can be situations where a request or response contains values that are dynamic, e.g. a timestamp or a UUID.
+Spring Cloud Contract can handle these situations.
+
+On **Producer side** values of the **request** need to be **concrete** but values of the **response** can be **dynamic**!
+
+[plantuml, "dynamic-values-producer-side", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBAckgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+Test -> Controller : request (concrete values)
+Controller -> Test : response (concrete or dynamic values)
+
+@enduml
+....
+
+On **Consumer side** values of the **request** can be **dynamic** but values of the **response** need to be **concrete**!
+
+[plantuml, "dynamic-values-consumer-side", "png"]
+....
+@startuml
+skinparam handwritten true
+skinparam sequence {
+
+    backgroundColor white
+    ArrowColor  grey
+    LineColor black
+    GroupBorderColor DeepSkyBlue
+    ActorBorderColor black
+    ActorBackgroundColor white
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    LifeLineBorderColor black
+    FrameBorderColor grey
+    FrameBackgroundColor white
+    FrameFontColor grey
+    BackgroundColor white
+    BorderColor black
+}
+
+hide footbox
+
+Client -> Stub : request (concrete or dynamic values)
+Stub -> Client : response (concrete values)
+
+
+@enduml
+....
+
+NOTE: You can use +
+`consumer(..)` and `producer(..)` +
+or `c(..)` and `p(..)` +
+or `client(..)` and `server(..)` +
+or `stub(..)` and `test(..)` +
+to configure these settings.
+
+[source,groovy]
+....
+...
+request {
+  body(
+    mobileNumber: $(
+      // This is the regex for mobileNumber accepted by the stub
+      consumer(regex("\\+49 ([1-9]{1}[0-9]{2}) ([0-9]{7})")),
+      // This number is sent from the producer to the Controller in generated tests
+      producer("+49 160 5563477")
+    )
+  )
+}
+...
+....
+
+You can do the same for values of the response, but this time the rules are inverted.
+
+[source, groovy]
+....
+...
+response {
+  ...
+  body (
+    amount: $(
+      // The stub will always return 2.86 as price
+      consumer(2.86),
+      // But the test for the controller will accept any double as amount
+      producer(anyDouble())
+    )
+  )
+}
+...
+....
+
+There can also be situations when a response should contain properties from a given request.
+This can be done using `fromRequest()` combined with jsonPath expression.
+
+[source, groovy]
+....
+...
+response {
+  ...
+  body (
+    // Now the returned qty will be the value from the request body
+    qty: fromRequest().body('$.qty')
+  )
+}
+...
+....
+
+It is also possible to call methods in the base class to generate values for the request
+or assert values in the response.
+
+[source, groovy]
+....
+...
+response {
+  ...
+request {
+  url $(
+    ...
+    server(execute('generateUrl()'))
+  )
+}
+
+response {
+  ...
+  body (
+    someValue: $(execute('assertSomeValueIsCorrect($it)')),
+  )
+}
+...
+....
+
+NOTE: See https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-dsl-dynamic-properties[Dynamic properties]
+
+
+
+=== Exercise 5.1: timeOrdered
+
+* The creation time of an `order` should be stored. +
+Use a member `Instant timeOrdered` in `Order` to keep the information. +
+It can be created by JPA when persisting the `Order` using `@CreationTimestamp`. +
+Prevent the value to be read from incoming requests using `@JsonProperty(access = JsonProperty.Access.READ_ONLY)`. +
+* The test for the `producer` should verify that ``cashier``'s `order` API returns a response property `timeOrdered` with a format of ISO 8601.
+* The value returned by stubs should always be `2016-12-31T23:30:59Z`.
+* Have a look at the generated and test and stubs and how these changes are reflected.
+* Adjust client tests accordingly
+
+**Hint:** To mock the "real" behaviour you will need to add the `Instant` to the object passed to the `CashierService` mock.
+This is how it can be done with Mockito:
+
+[source, java]
+....
+when(cashierService.processOrder(any(Order.class))).thenAnswer(o -> {
+  Order processedOrder = (Order) o.getArgument(0);
+  ...
+})
+....
+
+
+=== Exercise 5.2: mobileNumber
+
+* The ``cashier``'s order api should expect a `mobileNumber` to be given.
+* The mobile number should look like this: `+49 177 1234567` according to this regex `"\\+49 ([1-9]{1}[0-9]{2}) ([0-9]{7})"`.
+* Any number following this pattern should be accepted by the generated stubs.
+* The generated test should send the number `"+49 160 5563477"` to the producer.
+* The given number should be returned in the response as given in the request
+* Have a look at the generated and test and stubs and how these changes are reflected.
+* Adjust client tests accordingly
+
+
+=== Exercise 5.3: id in URL should be dynamic
+
+* The `id` part in the `/order/{id}/payment` URL should be dynamic
+* The contract should accept any id in the generated stubs
+* The contract should use a method `generateUrl()` to generate the URLs called from generated producer test. +
+You can use `Math.abs(new Random().nextInt())` to generate ids.
+* Have a look at the generated and test and stubs and how these changes are reflected.
+* Adjust client tests accordingly
+
+**Hint:** You'll need to modify the Mockito mock to accept any Long as order id:
+[source, java]
+....
+  when(cashierService.processPayment(anyLong(), eq(amountGiven))).thenReturn(processedPayment);
+....
+
+NOTE: See: https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-dsl-custom-methods[Executing Custom Methods on the Server Side]
+
+
+
+
+== Contracts in Git repository
+The consumers provided the contracts to the producer application by checking it out and providing a pull request (in theory).
+This requires consumers to be able to access to the code of the producer and to build it locally.
+Additionally this works only well when we aren't in a polyglot environment.
+The devs of a JavaScript client might have a harder time to follow this workflow which requires a JVM and a Maven or gradle build.
+
+Spring contract allows to provide the contracts and stubs from Git, Repository Manager like Nexus or Artifactory or a file system.
+When working in polyglot environments it makes things easier if contracts and stubs can be provided in Git.
+
+Let's do it...
+
+
+
+=== Exercise 6.1: Provide  contracts for cashiers through git
+
+* Create a git repository on your local machine (could be anywhere though)
+* Configure the scc plugin in the ``cashier``'s pom.xml to retrieve contracts from this repository +
+Keep the `/` in the end when you use a local repo!
+
+[source,xml]
+....
+...
+ <contractsMode>REMOTE</contractsMode>
+  <contractDependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>${project.artifactId}</artifactId>
+      <version>${project.version}</version>
+  </contractDependency>
+  <contractsRepositoryUrl>git://file:///path-to-your-(local)-repo/</contractsRepositoryUrl>
+</configuration>
+<executions>
+  <execution>
+      <phase>package</phase>
+      <goals>
+          <goal>pushStubsToScm</goal>
+      </goals>
+  </execution>
+</executions>
+...
+....
+
+* checkout the repository to another dir (representing your local repo)
+* Move(!) everything from ``cashier``s `src/test/resources/contracts` to the local repo.
+* commit the existing contracts to the repo using this structure: +
+
+[source, shell script]
+....
+.
+└── META-INF
+    └── de.fabiankrueger.scc
+        └── cashier
+            └── 1.0-SNAPSHOT
+                └── contracts
+                    ├── messaging
+                    │   └── order
+                    │       └── cashier-publishes-order-processed-event.groovy
+                    └── rest
+                        ├── order
+                        │   └── cashier-accepts-order.groovy
+                        └── payment
+                            └── cashier-accepts-payment.groovy
+....
+* Run a build for `cashier`, e.g. `mvn clean package`
+* Verify the console output, verify that scc generated and committed the stubs created from the contracts
+* Pull the latest changes into your local repo and verify that the stubs committed by scc are there.
+
+
+
+=== Exercise 6.2: Make the consumer(s) retrive the stubs from git
+
+The `customer` and `barista` still pulls the stubs from the local Maven repository.
+Let's modify the ``customer``'s integration test to pull the stubs from your git repo now.
+
+* Adjust the `@AutoConfigureStubRunner` annotation on all tests related to communication with the `cashier` module.
+
+* set the `ids` to the concrete dependency including the version.
+
+* set the `stubsMode` to `StubRunnerProperties.StubsMode.REMOTE`
+
+* and finally provide the `repositoryRoot`
+
+* verify that the tests are still green
+
+
+
+
+== Exercise 7: Using @EnableStubRunnerServer
+You can use a basic spring boot application annotated with `@EnableStubRunnerServer` to act as server for your stubs.
+
+NOTE: https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#features-stub-runner-boot[Stub Runner Boot]
+
+* Create a new Module or new project `stub-runner-server` which contains a Spring Boot starter application (you can use IntelliJ or start.spring.io to do so).
+
+* The application requires this dependency: +
+<dependency>
+<groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
+<scope>compile</scope>
+</dependency>
+
+* The only required dependency is the following (it is important that the scope is `compile` (which is the default)
+[source, xml]
+....
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
+    <scope>compile</scope>
+</dependency>
+....
+
+* Now annotate the class annotated with `@SpringBootApplication` with `@EnableStubRunnerServer`
+
+* When starting the application we need to provide some settings so it knows where to find the stubs to provide
+** `--stubrunner.stubsMode="LOCAL"`
+** `--stubrunner.ids="de.fabiankrueger.scc:cashier:1.0-SNAPSHOT:stubs:9876"`
+** You can provide these as system properties, application.properties, in your IDE or as startup parameters when calling the jar.
+
+* Start the application (there's a script in `scripts/stub-runner-server.sh`: +
+
+  java -jar <app.jar> \ 
+  --stubrunner.stubsMode="LOCAL" \ 
+  --stubrunner.ids="de.fabiankrueger.scc:cashier:1.0-SNAPSHOT:stubs:8083"`
+
+* call the provided stub:
+* You can use `scripts/order-coffee.sh` for this.
+
+e.g. with stubrunner
+* Discover StubRunner Boot -> provide stubs and messages `java -jar stubrunner.jar --stubrunner.stubsMode="LOCAL" --stubrunner.ids="groupId:artifactId:version:stubs:9876 --server.port:8083` +
+using  `@EnableStubRunnerServer`
+
+
+
+== More features
+* https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-dsl-passing-values-from-files[loading resquest/response from file]
+* https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-dsl-request[Specifying the HTTP Request]
+* https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-dsl-response[Specifying the HTTP Response]
+* https://cloud.spring.io/spring-cloud-contract/reference/htmlsingle/#contract-stateful-contracts[Stateful contracts]
+
+
+
+== Resources
 * https://spring.io/projects/spring-cloud-contract#learn[Spring Cloud Contract project]
 * https://cloud.spring.io/spring-cloud-contract/reference/html/[Reference Documentation]
 * https://docs.spring.io/spring-cloud-contract/docs/2.2.4.RELEASE/reference/html/maven-project.html[Maven configuration]
@@ -657,3 +898,14 @@ and use SCC to test the `consumer` consuming ``OrderPreparedEvent``s
 * https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#contract-dsl[Contract DSL Reference]
 * https://cloud.spring.io/spring-cloud-contract/reference/html/project-features.html#contract-groovy[Contract DSL YML Schema]
 * https://learning.oreilly.com/videos/hands-on-guide-to/9780135598436[Hands-On Guide to Spring Cloud Contract on O'Reilly (Video)]
+
+
+
+
+== Ideas
+* Cashier listens for ``OrderPreparedEvent`` and updates the state of the order
+* Cashier provides a new REST endpoint to get and query orders
+* The contracts for the new endpoint should be provided to a non-java client and thus should be kept in a dedicated Git repository.
+* Connect stub runner with real message broker
+* NodeJS as consumer
+* NodeJS as producer
