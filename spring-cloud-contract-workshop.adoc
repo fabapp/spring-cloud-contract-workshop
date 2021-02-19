@@ -288,7 +288,7 @@ The `cashier` processes the payment and returns the information about the paymen
 * Run 'mvn clean install -DskipTests' to generate the stubs
 * Create a new test on consumer side annotated with `@AutoConfigureStubRunner` which uses the wiremock stub and verfies the
   usage of the API by the `customer` (consumer).
-* Verify that the test succeeds and the stibs work as expected
+* Verify that the test succeeds and the stubs work as expected
 
 
 === Producer
