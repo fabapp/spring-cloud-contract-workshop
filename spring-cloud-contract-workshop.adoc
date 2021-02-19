@@ -314,7 +314,7 @@ MockMvc mockMvc;
 
 
 ==== Resources
-* https://cloud.spring.io/spring-cloud-contract/1.2.x/multi/multi__spring_cloud_contract_stub_runner.html=_common[StubRunner properties]
+* https://cloud.spring.io/spring-cloud-contract/reference/html/appendix.html[StubRunner properties]
 
 
 
